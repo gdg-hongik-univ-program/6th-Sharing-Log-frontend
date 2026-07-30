@@ -25,3 +25,4 @@ dist-ssr
 
 # 환경 변수 파일 무시 (이 아래부터 추가)
 .env
+.env.local

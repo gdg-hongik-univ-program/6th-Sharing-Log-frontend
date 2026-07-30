@@ -51,7 +51,7 @@ function Home() {
   };
   return (
     // 전체 배경 및 패딩 설정
-    <div className="min-h-screen bg-[#F9F8F5] px-5 py-10">
+    <div className="min-h-screen bg-[#F7F4EF] px-5 py-10">
       {/* 상단 헤더 */}
       <header className="flex items-center justify-between mb-10">
         <div>
