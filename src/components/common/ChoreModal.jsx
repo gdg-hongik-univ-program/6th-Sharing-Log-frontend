@@ -2,6 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { useGroupMembers } from "../../hooks/useGroupMember";
 import { extractEligibilityMemberIds } from "../../utils/choreUtils";
 
+function formatDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getTomorrowDate() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return formatDateInputValue(tomorrow);
+}
+
 const avatarColors = [
   "bg-red-400",
   "bg-green-400",
@@ -25,14 +40,16 @@ export default function ChoreModal({
     initialData?.schedule?.dueTime?.slice(0, 5) || "20:00",
   );
 
-  //   추가: 유저가 직접 요일과 기준 날짜를 설정할 수 있도록 State 추가
   const [weeklyDueDay, setWeeklyDueDay] = useState(
     initialData?.schedule?.weeklyDueDay || "MONDAY",
   );
-  const [biweeklyAnchorDate, setBiweeklyAnchorDate] = useState(
-    initialData?.schedule?.biweeklyAnchorDate ||
-      new Date().toISOString().split("T")[0],
+  const initialBiweeklyDueDate = initialData?.schedule?.biweeklyDueDate || "";
+  const minimumBiweeklyDueDate = getTomorrowDate();
+  const [biweeklyDueDate, setBiweeklyDueDate] = useState(
+    initialBiweeklyDueDate || minimumBiweeklyDueDate,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const { members, selectedIds, toggleMember, isLoading, setSelectedIds } =
     useGroupMembers(groupId);
@@ -60,11 +77,24 @@ export default function ChoreModal({
     }
   }, [members, initialData, setSelectedIds]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (selectedIds.length === 0) {
       alert("최소 1명 이상의 멤버를 선택해주세요.");
+      return;
+    }
+
+    const keepsExistingBiweeklyDueDate =
+      initialData?.schedule?.frequency === "BIWEEKLY" &&
+      biweeklyDueDate === initialBiweeklyDueDate;
+
+    if (
+      frequency === "BIWEEKLY" &&
+      !keepsExistingBiweeklyDueDate &&
+      biweeklyDueDate < minimumBiweeklyDueDate
+    ) {
+      setSubmitError("격주 첫 마감일은 내일부터 선택해 주세요.");
       return;
     }
 
@@ -73,12 +103,11 @@ export default function ChoreModal({
       formattedTime = `${formattedTime}:00`;
     }
 
-    //   유저가 선택한 State 값을 백엔드로 전송
     const schedule = {
       frequency,
       dueTime: formattedTime,
       weeklyDueDay: frequency === "WEEKLY" ? weeklyDueDay : null,
-      biweeklyAnchorDate: frequency === "BIWEEKLY" ? biweeklyAnchorDate : null,
+      biweeklyDueDate: frequency === "BIWEEKLY" ? biweeklyDueDate : null,
     };
 
     const memberListLength = Array.isArray(members)
@@ -91,8 +120,19 @@ export default function ChoreModal({
       membershipIds: isAllMembers ? [] : selectedIds,
     };
 
-    onSubmit({ name, schedule, eligibility });
-    onClose();
+    try {
+      setIsSubmitting(true);
+      setSubmitError("");
+      await onSubmit({ name, schedule, eligibility });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "업무를 저장하지 못했습니다.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -112,7 +152,9 @@ export default function ChoreModal({
             </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            disabled={isSubmitting}
             className="p-2 text-gray-400 bg-gray-100 rounded-full hover:bg-gray-200"
           >
             ✕
@@ -163,7 +205,6 @@ export default function ChoreModal({
             </div>
           </div>
 
-          {/* 추가: '매주'일 경우 요일 선택 UI */}
           {frequency === "WEEKLY" && (
             <div>
               <label className="block mb-2 text-sm font-bold text-gray-700">
@@ -185,16 +226,24 @@ export default function ChoreModal({
             </div>
           )}
 
-          {/* 추가: '격주'일 경우 기준 날짜 선택 UI */}
           {frequency === "BIWEEKLY" && (
             <div>
               <label className="block mb-2 text-sm font-bold text-gray-700">
-                격주 기준 날짜 (선택한 날짜부터 2주마다)
+                격주 첫 마감일 (선택한 날짜부터 2주마다)
               </label>
               <input
                 type="date"
-                value={biweeklyAnchorDate}
-                onChange={(e) => setBiweeklyAnchorDate(e.target.value)}
+                value={biweeklyDueDate}
+                min={
+                  initialBiweeklyDueDate &&
+                  initialBiweeklyDueDate < minimumBiweeklyDueDate
+                    ? initialBiweeklyDueDate
+                    : minimumBiweeklyDueDate
+                }
+                onChange={(e) => {
+                  setBiweeklyDueDate(e.target.value);
+                  setSubmitError("");
+                }}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400"
                 required
               />
@@ -260,16 +309,29 @@ export default function ChoreModal({
             )}
           </div>
 
+          {submitError && (
+            <p
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600"
+            >
+              {submitError}
+            </p>
+          )}
+
           <button
             type="submit"
-            disabled={selectedIds.length === 0}
+            disabled={selectedIds.length === 0 || isSubmitting}
             className={`w-full py-4 text-lg font-bold text-white transition-colors rounded-xl ${
-              selectedIds.length > 0
+              selectedIds.length > 0 && !isSubmitting
                 ? "bg-[#C8494C] hover:bg-[#b84a4a]"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >
-            {initialData ? "수정하기" : "생성하기"}
+            {isSubmitting
+              ? "저장 중..."
+              : initialData
+                ? "수정하기"
+                : "생성하기"}
           </button>
         </form>
       </div>

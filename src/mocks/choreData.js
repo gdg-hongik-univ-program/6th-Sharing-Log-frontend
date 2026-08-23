@@ -7,7 +7,7 @@ export const mockChores = [
       frequency: "DAILY", // 매일
       dueTime: "18:00",
       weeklyDueDay: null,
-      biweeklyAnchorDate: null,
+      biweeklyDueDate: null,
     },
     eligibility: {
       mode: "ALL_ACTIVE_MEMBERS",
@@ -39,7 +39,7 @@ export const mockChores = [
       frequency: "WEEKLY", // 매주
       dueTime: "17:00",
       weeklyDueDay: "FRIDAY",
-      biweeklyAnchorDate: null,
+      biweeklyDueDate: null,
     },
     eligibility: {
       mode: "SPECIFIC_MEMBERS",
