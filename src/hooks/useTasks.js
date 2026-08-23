@@ -83,7 +83,9 @@ export default function useTasks(groupId) {
     formData,
   ) {
     if (!groupId) {
-      return;
+      throw new Error(
+        "업무를 저장할 하우스 정보를 찾을 수 없습니다.",
+      );
     }
 
     try {
@@ -110,6 +112,8 @@ export default function useTasks(groupId) {
         "업무를 저장하지 못했습니다.",
         error,
       );
+
+      throw error;
     }
   }
 
