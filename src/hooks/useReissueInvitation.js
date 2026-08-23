@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 
 import { getCsrfToken } from "../api/authApi";
 import { reissueInvitation } from "../api/invitationApi";
+import { buildFrontendInviteUrl } from "../utils/invitation";
 
 export default function useReissueInvitation(
   groupPublicId,
@@ -45,7 +46,13 @@ export default function useReissueInvitation(
           csrf,
         });
 
-      setInvitation(newInvitation);
+      setInvitation({
+        ...newInvitation,
+        inviteUrl:
+          buildFrontendInviteUrl(
+            newInvitation.code,
+          ),
+      });
     } catch (error) {
       console.error(error);
 

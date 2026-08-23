@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
+import { buildFrontendInviteUrl } from "../utils/invitation";
+
 export default function useInviteHouse() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -9,14 +11,16 @@ export default function useInviteHouse() {
 
   const houseName = location.state?.houseName;
   const inviteCode = location.state?.inviteCode;
-  const inviteUrl = location.state?.inviteUrl;
+  const inviteUrl = inviteCode
+    ? buildFrontendInviteUrl(inviteCode)
+    : "";
   const expiresAt = location.state?.expiresAt;
 
   useEffect(() => {
-    if (!inviteCode || !inviteUrl) {
+    if (!inviteCode) {
       navigate("/create-house", { replace: true });
     }
-  }, [inviteCode, inviteUrl, navigate]);
+  }, [inviteCode, navigate]);
 
   async function copy(value, target) {
     try {
