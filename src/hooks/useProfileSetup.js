@@ -10,6 +10,10 @@ import {
   clearActiveGroupId,
   resolveActiveGroup,
 } from "../utils/activeGroup";
+import {
+  getJoinHousePath,
+  getPendingInviteCode,
+} from "../utils/invitation";
 
 const MAX_NICKNAME_LENGTH = 20;
 
@@ -54,6 +58,20 @@ export default function useProfileSetup() {
         nickname: normalizedNickname,
         csrf,
       });
+
+      const pendingInviteCode =
+        getPendingInviteCode();
+
+      if (pendingInviteCode) {
+        navigate(
+          getJoinHousePath(
+            pendingInviteCode,
+          ),
+          { replace: true },
+        );
+
+        return;
+      }
 
       // 사용자가 가입한 모든 하우스를 조회합니다.
       const groups = await getMyGroups();

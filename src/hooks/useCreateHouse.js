@@ -46,8 +46,6 @@ export default function useCreateHouse() {
         groupPublicId:
           group.groupPublicId,
         inviteCode: invitation.code,
-        inviteUrl:
-          invitation.inviteUrl,
         expiresAt:
           invitation.expiresAt,
       },

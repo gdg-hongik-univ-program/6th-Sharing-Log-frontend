@@ -49,9 +49,9 @@ function PushNotificationControl() {
           </p>
 
           <p className="mt-1 text-xs leading-5 text-[#8B8575]">
-            현재 사용하는 브라우저를
-            백엔드에 등록해 새로운 알림을
-            받을 수 있어요.
+            다른 PC나 휴대전화에서도 알림을
+            받으려면 해당 기기에서 각각 한 번씩
+            등록해야 해요.
           </p>
         </div>
       </div>
@@ -175,12 +175,6 @@ function PushNotificationControl() {
               ? "이 기기 알림 끄기"
               : "이 기기 알림 켜기"}
       </button>
-
-      <p className="mt-3 text-xs leading-5 text-[#8B8575]">
-        다른 PC나 휴대전화에서도 알림을
-        받으려면 해당 기기에서 각각 한 번씩
-        등록해야 해요.
-      </p>
     </div>
   );
 }

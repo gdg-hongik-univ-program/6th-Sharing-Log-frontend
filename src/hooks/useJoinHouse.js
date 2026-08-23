@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 
 import { getCsrfToken } from "../api/authApi";
 import { acceptInvitation } from "../api/invitationApi";
@@ -8,12 +11,21 @@ import {
   INVITE_CODE_REGEX,
 } from "../constants/invitation";
 import { saveActiveGroupId } from "../utils/activeGroup";
+import {
+  clearPendingInviteCode,
+  savePendingInviteCode,
+} from "../utils/invitation";
 
 export default function useJoinHouse() {
   const navigate = useNavigate();
+  const [searchParams] =
+    useSearchParams();
+
+  const inviteCodeFromLink =
+    searchParams.get("inviteCode") ?? "";
 
   const [typedCode, setTypedCode] =
-    useState("");
+    useState(inviteCodeFromLink);
 
   const [errorMessage, setErrorMessage] =
     useState("");
@@ -59,10 +71,24 @@ export default function useJoinHouse() {
         joinedGroup.groupPublicId,
       );
 
+      clearPendingInviteCode();
+
       navigate("/home", {
         replace: true,
       });
     } catch (error) {
+      if (error?.status === 401) {
+        savePendingInviteCode(
+          cleanCode,
+        );
+
+        navigate("/", {
+          replace: true,
+        });
+
+        return;
+      }
+
       setErrorMessage(
         error instanceof Error
           ? error.message

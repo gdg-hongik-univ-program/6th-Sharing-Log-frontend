@@ -8,6 +8,10 @@ import {
   clearActiveGroupId,
   resolveActiveGroup,
 } from "../utils/activeGroup";
+import {
+  getJoinHousePath,
+  getPendingInviteCode,
+} from "../utils/invitation";
 
 export default function useLoginSession() {
   const navigate = useNavigate();
@@ -49,6 +53,20 @@ export default function useLoginSession() {
           navigate("/profile-setup", {
             replace: true,
           });
+
+          return;
+        }
+
+        const pendingInviteCode =
+          getPendingInviteCode();
+
+        if (pendingInviteCode) {
+          navigate(
+            getJoinHousePath(
+              pendingInviteCode,
+            ),
+            { replace: true },
+          );
 
           return;
         }
